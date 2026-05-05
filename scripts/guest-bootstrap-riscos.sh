@@ -4,6 +4,7 @@ set -euo pipefail
 DIRECT_URL="${DIRECT_URL:-https://www.riscosdev.com/wordpress/wp-content/uploads/2025/12/DirectPi5.tbz}"
 ARCHIVE="${ARCHIVE:-$HOME/DirectPi5.tbz}"
 DIRECT_DIR="$HOME/RISC_OS_Direct/RISC_OS_Linux_Binary"
+EXTRACT_STAMP="${EXTRACT_STAMP:-$HOME/RISC_OS_Direct/.macos-vm-extract-complete}"
 LOG_FILE="${LOG_FILE:-$HOME/riscos-direct-bootstrap.log}"
 VNC_DISPLAY="${VNC_DISPLAY:-:1}"
 VNC_GEOMETRY="${VNC_GEOMETRY:-1920x1080}"
@@ -46,14 +47,40 @@ download_direct() {
   curl --fail --location --continue-at - --output "$ARCHIVE" "$DIRECT_URL"
 }
 
+direct_tree_complete() {
+  [[ -s "$DIRECT_DIR/Built/sdl" ]] &&
+    [[ -s "$DIRECT_DIR/Unix/LinuxSupport/common.mk" ]] &&
+    [[ -s "$DIRECT_DIR/Unix/LinuxSupport/run_RISC_OS" ]] &&
+    [[ -s "$DIRECT_DIR/Unix/RISCOS.IMG" ]] &&
+    [[ -d "$DIRECT_DIR/hostfs/HardDisc4" ]]
+}
+
 extract_direct() {
-  if [[ -d "$DIRECT_DIR" ]]; then
+  if [[ -f "$EXTRACT_STAMP" ]] && direct_tree_complete; then
     log "Using existing $DIRECT_DIR"
     return 0
   fi
 
+  if direct_tree_complete; then
+    log "Using existing $DIRECT_DIR and marking extraction complete"
+    : > "$EXTRACT_STAMP"
+    return 0
+  fi
+
+  if [[ -e "$HOME/RISC_OS_Direct" ]]; then
+    log "Removing incomplete RISC_OS_Direct extraction"
+    rm -rf "$HOME/RISC_OS_Direct"
+  fi
+
   log "Extracting DirectPi5.tbz inside Linux so RISC OS xattrs and filenames survive"
   tar --xattrs -xjf "$ARCHIVE" -C "$HOME"
+
+  if ! direct_tree_complete; then
+    printf 'Direct archive extraction did not produce the expected RISC OS Direct tree.\n' >&2
+    exit 1
+  fi
+
+  : > "$EXTRACT_STAMP"
 }
 
 link_direct_layout() {

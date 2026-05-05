@@ -10,6 +10,7 @@ Environment=HOME=/home/ubuntu
 ExecStart=/usr/local/bin/riscos-direct start-vnc
 ExecStop=/usr/local/bin/riscos-direct stop-vnc
 RemainAfterExit=yes
+TimeoutStartSec=45min
 
 [Install]
 WantedBy=multi-user.target
