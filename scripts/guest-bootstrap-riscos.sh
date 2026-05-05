@@ -9,6 +9,8 @@ LOG_FILE="${LOG_FILE:-$HOME/riscos-direct-bootstrap.log}"
 VNC_DISPLAY="${VNC_DISPLAY:-:1}"
 VNC_GEOMETRY="${VNC_GEOMETRY:-1920x1080}"
 VNC_PASSWORD="${VNC_PASSWORD:-riscos}"
+DISC_SHARE_TAG="${DISC_SHARE_TAG:-riscosdiscs}"
+DISC_SHARE_MOUNT="${DISC_SHARE_MOUNT:-/mnt/riscos-discs}"
 
 DEBIAN_FRONTEND=noninteractive
 export DEBIAN_FRONTEND
@@ -127,12 +129,67 @@ build_patched_qemu() {
   make -f Unix/LinuxSupport/common.mk Built/qemu-arm Built/qemu-link Built/wrapper Built/wait_stdin
 }
 
+sanitize_disc_name() {
+  local name="$1"
+  name="${name%.*}"
+  name="${name//[^A-Za-z0-9_+-]/_}"
+  name="${name:0:10}"
+  if [[ -z "$name" ]]; then
+    name="ImportedDisc"
+  fi
+  printf '%s\n' "$name"
+}
+
+mount_disc_share() {
+  sudo modprobe 9pnet_virtio >/dev/null 2>&1 || true
+  sudo mkdir -p "$DISC_SHARE_MOUNT"
+
+  if ! mountpoint -q "$DISC_SHARE_MOUNT"; then
+    sudo mount -t 9p -o trans=virtio,version=9p2000.L,ro,access=any "$DISC_SHARE_TAG" "$DISC_SHARE_MOUNT"
+  fi
+}
+
+import_configured_discs() {
+  local source name target tmp source_size source_mtime target_size target_mtime
+
+  if ! mount_disc_share; then
+    log "Could not mount QEMU disc share '$DISC_SHARE_TAG'"
+    return 0
+  fi
+
+  cd "$DIRECT_DIR"
+  mkdir -p HardDisc4/ImportedDiscs
+
+  while IFS= read -r -d '' source; do
+    name="$(sanitize_disc_name "$(basename "$source")")"
+    target="HardDisc4/ImportedDiscs/$name,ffc"
+    source_size="$(sudo stat -c '%s' "$source")"
+    source_mtime="$(sudo stat -c '%Y' "$source")"
+    target_size="$(stat -c '%s' "$target" 2>/dev/null || true)"
+    target_mtime="$(stat -c '%Y' "$target" 2>/dev/null || true)"
+
+    if [[ "$source_size" == "$target_size" && "$source_mtime" == "$target_mtime" ]]; then
+      log "Using existing imported disc image $target"
+      continue
+    fi
+
+    log "Importing disc image $(basename "$source") as $target"
+    tmp="$target.tmp.$$"
+    rm -f "$tmp"
+    sudo cp -p "$source" "$tmp"
+    sudo chown "$(id -u):$(id -g)" "$tmp"
+    chmod 644 "$tmp"
+    mv "$tmp" "$target"
+  done < <(sudo find "$DISC_SHARE_MOUNT" -maxdepth 1 -type f -iname '*.hdf' -print0)
+}
+
 prepare() {
   exec > >(tee -a "$LOG_FILE") 2>&1
   install_deps
   download_direct
   extract_direct
   link_direct_layout
+  import_configured_discs
   patch_direct_for_local_vm
   build_patched_qemu
   log "RISC OS Direct is prepared"
@@ -151,6 +208,17 @@ cd "$HOME/RISC_OS_Direct/RISC_OS_Linux_Binary" || exit 1
 export RISC_OS__GUI="${RISC_OS__GUI:-Built/sdl --swapmouse}"
 export RISC_OS__INSECURE=YES
 export SDL_VIDEO_WINDOW_POS=0,0
+boot='/<IXFS$HardDisc4>.!Boot'
+if [ "${RISCOS_AUTO_MOUNT_DISCS:-0}" = "1" ]; then
+  for image in HardDisc4/ImportedDiscs/*,ffc; do
+    [ -e "$image" ] || continue
+    name="$(basename "$image" ',ffc')"
+    boot="Echo Mounting imported disc $name
+/<IXFS\$HardDisc4>.ImportedDiscs.$name
+$boot"
+  done
+fi
+export RISC_OS_Alias_IXFSBoot="$boot"
 (
   i=0
   while [ "$i" -lt 200 ]; do

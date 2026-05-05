@@ -40,6 +40,14 @@ Start it:
 ./scripts/start-vm.sh
 ```
 
+Start it with an Acorn/RISC OS hard disc image attached:
+
+```bash
+./scripts/start-vm.sh --disc /path/to/disc.hdf
+```
+
+The launcher exposes the selected image to the Linux guest over a read-only QEMU 9p share. The guest then imports it into `HardDisc4/ImportedDiscs` as a `,ffc` FileCore image so it is available from the RISC OS desktop. It does not auto-run the image on boot by default, because not every emulator HDF mounts cleanly that way.
+
 Stop it:
 
 ```bash

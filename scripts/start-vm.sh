@@ -10,6 +10,41 @@ SSH_PORT="${SSH_PORT:-2222}"
 VNC_PORT="${VNC_PORT:-5901}"
 MEMORY="${MEMORY:-3072}"
 SMP="${SMP:-4}"
+DISC_PATH=""
+DISC_SHARE_TAG="riscosdiscs"
+DISC_SHARE_DIR="$VM_DIR/disc-share"
+
+usage() {
+  cat <<USAGE
+Usage: $0 [--disc /path/to/acorn-disc.hdf]
+
+Options:
+  --disc PATH   Share one Acorn/RISC OS hard disc image with the guest.
+  -h, --help    Show this help.
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --disc)
+      if [[ $# -lt 2 ]]; then
+        printf '%s\n' '--disc requires a path.' >&2
+        exit 2
+      fi
+      DISC_PATH="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown argument: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
 
 find_qemu() {
   if command -v qemu-system-aarch64 >/dev/null 2>&1; then
@@ -50,6 +85,26 @@ if [[ ! -f "$DISK" || ! -f "$SEED_ISO" ]]; then
   exit 1
 fi
 
+DISC_ARGS=()
+if [[ -n "$DISC_PATH" ]]; then
+  if [[ ! -f "$DISC_PATH" ]]; then
+    printf 'Disc image not found: %s\n' "$DISC_PATH" >&2
+    exit 1
+  fi
+
+  DISC_BASENAME="$(basename "$DISC_PATH")"
+  rm -rf "$DISC_SHARE_DIR"
+  mkdir -p "$DISC_SHARE_DIR"
+  if ! ln "$DISC_PATH" "$DISC_SHARE_DIR/$DISC_BASENAME" 2>/dev/null; then
+    printf 'Hard-linking the disc image failed; copying it into %s instead.\n' "$DISC_SHARE_DIR" >&2
+    cp -p "$DISC_PATH" "$DISC_SHARE_DIR/$DISC_BASENAME"
+  fi
+  DISC_ARGS=(
+    -fsdev "local,id=$DISC_SHARE_TAG,path=$DISC_SHARE_DIR,security_model=mapped-xattr,readonly=on"
+    -device "virtio-9p-pci,fsdev=$DISC_SHARE_TAG,mount_tag=$DISC_SHARE_TAG"
+  )
+fi
+
 QEMU="$(find_qemu || true)"
 if [[ -z "$QEMU" ]]; then
   printf 'qemu-system-aarch64 was not found. Install QEMU first:\n  brew install qemu\n' >&2
@@ -83,6 +138,9 @@ fi
 
 printf 'Starting local QEMU VM. SSH: ssh -p %s ubuntu@localhost (password: ubuntu)\n' "$SSH_PORT"
 printf 'When bootstrap finishes, open vnc://localhost:%s (password: riscos)\n' "$VNC_PORT"
+if [[ -n "$DISC_PATH" ]]; then
+  printf 'Sharing Acorn/RISC OS disc image: %s\n' "$DISC_PATH"
+fi
 printf '%s\n\n' "$QUIT_HINT"
 
 exec "$QEMU" \
@@ -98,6 +156,7 @@ exec "$QEMU" \
   -drive "if=none,id=seed,format=raw,media=cdrom,file=$SEED_ISO,readonly=on" \
   -device virtio-net-pci,netdev=net0 \
   -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:$SSH_PORT-:22,hostfwd=tcp:127.0.0.1:$VNC_PORT-:5901" \
+  "${DISC_ARGS[@]}" \
   "${SERIAL_ARGS[@]}" \
   -display none \
   -name riscos-direct
