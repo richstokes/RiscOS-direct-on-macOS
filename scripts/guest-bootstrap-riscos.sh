@@ -121,7 +121,7 @@ write_xstartup() {
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
 cd "$HOME/RISC_OS_Direct/RISC_OS_Linux_Binary" || exit 1
-export RISC_OS__GUI=Built/sdl
+export RISC_OS__GUI="${RISC_OS__GUI:-Built/sdl --swapmouse}"
 export RISC_OS__INSECURE=YES
 export SDL_VIDEO_WINDOW_POS=0,0
 (

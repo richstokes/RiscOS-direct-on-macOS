@@ -60,6 +60,8 @@ The VNC password is `riscos`. The default VNC desktop is `1920x1080`, matching t
 
 After the first successful bootstrap, the guest has a `riscos-direct-vnc.service` systemd unit enabled, so later boots should bring the VNC/RISC OS session back automatically.
 
+The launcher uses Direct's `--swapmouse` SDL option by default. That makes a Mac right-click act as the RISC OS Menu button. RISC OS traditionally treats the physical right button as Adjust and the middle button as Menu, so this default is friendlier for two-button/trackpad Mac setups.
+
 ## Useful Commands
 
 Restart RISC OS inside the guest:
