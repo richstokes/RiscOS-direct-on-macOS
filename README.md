@@ -46,7 +46,13 @@ Start it with an Acorn/RISC OS hard disc image attached:
 ./scripts/start-vm.sh --disc /path/to/disc.hdf
 ```
 
-The launcher exposes the selected image to the Linux guest over a read-only QEMU 9p share. The guest then imports it into `HardDisc4/ImportedDiscs` as a `,ffc` FileCore image so it is available from the RISC OS desktop. It does not auto-run the image on boot by default, because not every emulator HDF mounts cleanly that way.
+Start it with an Acorn/RISC OS floppy image attached:
+
+```bash
+./scripts/start-vm.sh --floppy /path/to/floppy.adf
+```
+
+You can pass both `--disc` and `--floppy` in the same launch. The launcher exposes the selected images to the Linux guest over a read-only QEMU 9p share. The guest then imports HDF images into `HardDisc4/ImportedDiscs` and ADF images into `HardDisc4/ImportedFloppies` as `,ffc` FileCore images so they are available from the RISC OS desktop. It does not auto-run the images on boot by default, because not every emulator image mounts cleanly that way.
 
 Stop it:
 

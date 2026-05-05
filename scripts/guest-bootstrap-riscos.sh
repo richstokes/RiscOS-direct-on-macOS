@@ -149,20 +149,18 @@ mount_disc_share() {
   fi
 }
 
-import_configured_discs() {
+import_image_set() {
+  local pattern="$1"
+  local destination="$2"
+  local image_type="$3"
   local source name target tmp source_size source_mtime target_size target_mtime
 
-  if ! mount_disc_share; then
-    log "Could not mount QEMU disc share '$DISC_SHARE_TAG'"
-    return 0
-  fi
-
   cd "$DIRECT_DIR"
-  mkdir -p HardDisc4/ImportedDiscs
+  mkdir -p "$destination"
 
   while IFS= read -r -d '' source; do
     name="$(sanitize_disc_name "$(basename "$source")")"
-    target="HardDisc4/ImportedDiscs/$name,ffc"
+    target="$destination/$name,$image_type"
     source_size="$(sudo stat -c '%s' "$source")"
     source_mtime="$(sudo stat -c '%Y' "$source")"
     target_size="$(stat -c '%s' "$target" 2>/dev/null || true)"
@@ -173,14 +171,24 @@ import_configured_discs() {
       continue
     fi
 
-    log "Importing disc image $(basename "$source") as $target"
+    log "Importing image $(basename "$source") as $target"
     tmp="$target.tmp.$$"
     rm -f "$tmp"
     sudo cp -p "$source" "$tmp"
     sudo chown "$(id -u):$(id -g)" "$tmp"
     chmod 644 "$tmp"
     mv "$tmp" "$target"
-  done < <(sudo find "$DISC_SHARE_MOUNT" -maxdepth 1 -type f -iname '*.hdf' -print0)
+  done < <(sudo find "$DISC_SHARE_MOUNT" -maxdepth 1 -type f -iname "$pattern" -print0)
+}
+
+import_configured_discs() {
+  if ! mount_disc_share; then
+    log "Could not mount QEMU disc share '$DISC_SHARE_TAG'"
+    return 0
+  fi
+
+  import_image_set '*.hdf' HardDisc4/ImportedDiscs ffc
+  import_image_set '*.adf' HardDisc4/ImportedFloppies ffc
 }
 
 prepare() {

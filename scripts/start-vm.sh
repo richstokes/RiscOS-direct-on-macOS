@@ -11,16 +11,18 @@ VNC_PORT="${VNC_PORT:-5901}"
 MEMORY="${MEMORY:-3072}"
 SMP="${SMP:-4}"
 DISC_PATH=""
+FLOPPY_PATH=""
 DISC_SHARE_TAG="riscosdiscs"
 DISC_SHARE_DIR="$VM_DIR/disc-share"
 
 usage() {
   cat <<USAGE
-Usage: $0 [--disc /path/to/acorn-disc.hdf]
+Usage: $0 [--disc /path/to/acorn-disc.hdf] [--floppy /path/to/acorn-floppy.adf]
 
 Options:
-  --disc PATH   Share one Acorn/RISC OS hard disc image with the guest.
-  -h, --help    Show this help.
+  --disc PATH     Share one Acorn/RISC OS hard disc image with the guest.
+  --floppy PATH   Share one Acorn/RISC OS floppy image with the guest.
+  -h, --help      Show this help.
 USAGE
 }
 
@@ -32,6 +34,14 @@ while [[ $# -gt 0 ]]; do
         exit 2
       fi
       DISC_PATH="$2"
+      shift 2
+      ;;
+    --floppy)
+      if [[ $# -lt 2 ]]; then
+        printf '%s\n' '--floppy requires a path.' >&2
+        exit 2
+      fi
+      FLOPPY_PATH="$2"
       shift 2
       ;;
     -h|--help)
@@ -86,19 +96,29 @@ if [[ ! -f "$DISK" || ! -f "$SEED_ISO" ]]; then
 fi
 
 DISC_ARGS=()
-if [[ -n "$DISC_PATH" ]]; then
-  if [[ ! -f "$DISC_PATH" ]]; then
-    printf 'Disc image not found: %s\n' "$DISC_PATH" >&2
+stage_import_image() {
+  local source="$1"
+  local label="$2"
+  local basename
+
+  if [[ ! -f "$source" ]]; then
+    printf '%s image not found: %s\n' "$label" "$source" >&2
     exit 1
   fi
 
-  DISC_BASENAME="$(basename "$DISC_PATH")"
+  basename="$(basename "$source")"
+  if ! ln "$source" "$DISC_SHARE_DIR/$basename" 2>/dev/null; then
+    printf 'Hard-linking the %s image failed; copying it into %s instead.\n' "$label" "$DISC_SHARE_DIR" >&2
+    cp -p "$source" "$DISC_SHARE_DIR/$basename"
+  fi
+}
+
+if [[ -n "$DISC_PATH" || -n "$FLOPPY_PATH" ]]; then
   rm -rf "$DISC_SHARE_DIR"
   mkdir -p "$DISC_SHARE_DIR"
-  if ! ln "$DISC_PATH" "$DISC_SHARE_DIR/$DISC_BASENAME" 2>/dev/null; then
-    printf 'Hard-linking the disc image failed; copying it into %s instead.\n' "$DISC_SHARE_DIR" >&2
-    cp -p "$DISC_PATH" "$DISC_SHARE_DIR/$DISC_BASENAME"
-  fi
+  [[ -z "$DISC_PATH" ]] || stage_import_image "$DISC_PATH" "Disc"
+  [[ -z "$FLOPPY_PATH" ]] || stage_import_image "$FLOPPY_PATH" "Floppy"
+
   DISC_ARGS=(
     -fsdev "local,id=$DISC_SHARE_TAG,path=$DISC_SHARE_DIR,security_model=mapped-xattr,readonly=on"
     -device "virtio-9p-pci,fsdev=$DISC_SHARE_TAG,mount_tag=$DISC_SHARE_TAG"
@@ -140,6 +160,9 @@ printf 'Starting local QEMU VM. SSH: ssh -p %s ubuntu@localhost (password: ubunt
 printf 'When bootstrap finishes, open vnc://localhost:%s (password: riscos)\n' "$VNC_PORT"
 if [[ -n "$DISC_PATH" ]]; then
   printf 'Sharing Acorn/RISC OS disc image: %s\n' "$DISC_PATH"
+fi
+if [[ -n "$FLOPPY_PATH" ]]; then
+  printf 'Sharing Acorn/RISC OS floppy image: %s\n' "$FLOPPY_PATH"
 fi
 printf '%s\n\n' "$QUIT_HINT"
 
