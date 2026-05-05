@@ -1,6 +1,4 @@
-# RISC OS Direct for Pi 5 on macOS with Local QEMU
-
-This runs entirely locally.
+# RISC OS 5 on macOS with QEMU
 
 This repo wraps [RISC OS Direct for Pi 5](https://www.riscosdev.com/projects/risc-os-direct-for-pi-5/) so it can run on macOS via a local QEMU VM. It does not redistribute RISC OS Direct, Ubuntu, QEMU, or any VM disk image. The scripts download the upstream files at setup time.
 
