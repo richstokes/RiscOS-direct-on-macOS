@@ -12,16 +12,16 @@ MEMORY="${MEMORY:-3072}"
 SMP="${SMP:-4}"
 DISC_PATH=""
 FLOPPY_PATH=""
-OPEN_VNC=0
+OPEN_VNC=1
 DISC_SHARE_TAG="riscosdiscs"
 DISC_SHARE_DIR="$VM_DIR/disc-share"
 
 usage() {
   cat <<USAGE
-Usage: $0 [--open-vnc] [--disc /path/to/acorn-disc.hdf] [--floppy /path/to/acorn-floppy.adf]
+Usage: $0 [--no-open-vnc] [--disc /path/to/acorn-disc.hdf] [--floppy /path/to/acorn-floppy.adf]
 
 Options:
-  --open-vnc     Open macOS VNC when ready, then stop the VM when the viewer exits.
+  --no-open-vnc  Stay attached to QEMU instead of opening macOS VNC.
   --disc PATH     Share one Acorn/RISC OS hard disc image with the guest.
   --floppy PATH   Share one Acorn/RISC OS floppy image with the guest.
   -h, --help      Show this help.
@@ -32,6 +32,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --open-vnc)
       OPEN_VNC=1
+      shift
+      ;;
+    --no-open-vnc)
+      OPEN_VNC=0
       shift
       ;;
     --disc)

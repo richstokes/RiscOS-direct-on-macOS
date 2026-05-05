@@ -40,13 +40,15 @@ Start it:
 ./scripts/start-vm.sh
 ```
 
-Start it in managed VNC mode:
+By default, this waits until RISC OS is reachable over VNC, opens `vnc://localhost:5901` with macOS, and stops the VM when the VNC viewer exits. It also keeps the serial console in `vm/serial.log` instead of taking over your terminal.
+
+Start it without opening VNC:
 
 ```bash
-./scripts/start-vm.sh --open-vnc
+./scripts/start-vm.sh --no-open-vnc
 ```
 
-This waits until RISC OS is reachable over VNC, opens `vnc://localhost:5901` with macOS, and stops the VM when the VNC viewer exits. It also keeps the serial console in `vm/serial.log` instead of taking over your terminal.
+In this mode, QEMU stays attached to your terminal. Quit QEMU from that terminal with `Ctrl-A`, then `X`, or use `./scripts/stop-vm.sh` from another terminal.
 
 Start it with an Acorn/RISC OS hard disc image attached:
 
