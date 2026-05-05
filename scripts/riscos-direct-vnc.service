@@ -1,0 +1,15 @@
+[Unit]
+Description=RISC OS Direct VNC session
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=forking
+User=ubuntu
+Environment=HOME=/home/ubuntu
+ExecStart=/usr/local/bin/riscos-direct start-vnc
+ExecStop=/usr/local/bin/riscos-direct stop-vnc
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
