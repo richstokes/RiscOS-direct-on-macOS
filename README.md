@@ -42,6 +42,12 @@ Start it:
 ./scripts/start-vm.sh
 ```
 
+Stop it:
+
+```bash
+./scripts/stop-vm.sh
+```
+
 First boot is not instant. The local seed ISO installs build/runtime dependencies, downloads `DirectPi5.tbz`, extracts it inside Linux so extended attributes and RISC OS filenames survive, builds/links Direct's patched `qemu-arm`, and starts a VNC session.
 
 Watch progress from another terminal:
@@ -76,7 +82,19 @@ Check bootstrap status:
 ssh -p 2222 ubuntu@localhost /usr/local/bin/riscos-direct status
 ```
 
-Quit the QEMU VM from the terminal running it with `Ctrl-A`, then `X`.
+Gracefully stop the VM from another terminal:
+
+```bash
+./scripts/stop-vm.sh
+```
+
+If the guest SSH service is not responding, you can force-kill the matching QEMU process:
+
+```bash
+./scripts/stop-vm.sh --force
+```
+
+You can also quit QEMU from the terminal running it with `Ctrl-A`, then `X`.
 
 ## Notes
 
