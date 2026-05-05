@@ -15,6 +15,7 @@ FLOPPY_PATH=""
 OPEN_VNC=1
 DISC_SHARE_TAG="riscosdiscs"
 DISC_SHARE_DIR="$VM_DIR/disc-share"
+EXTRACTED_FLOPPIES_DIR="$DISC_SHARE_DIR/_extracted/floppies"
 
 usage() {
   cat <<USAGE
@@ -136,11 +137,67 @@ stage_import_image() {
   fi
 }
 
+sanitize_image_name() {
+  local name="$1"
+  name="${name%.*}"
+  name="${name//[^A-Za-z0-9_+-]/_}"
+  name="${name:0:10}"
+  if [[ -z "$name" ]]; then
+    name="Imported"
+  fi
+  printf '%s\n' "$name"
+}
+
+find_adfslib() {
+  local image="$1"
+  local dir
+
+  if [[ -n "${ADFSLIB_PATH:-}" && -f "$ADFSLIB_PATH/ADFSlib.py" ]]; then
+    printf '%s\n' "$ADFSLIB_PATH"
+    return 0
+  fi
+
+  dir="$(cd "$(dirname "$image")" && pwd)"
+  while [[ "$dir" != "/" ]]; do
+    if [[ -f "$dir/adfslib/ADFSlib.py" ]]; then
+      printf '%s\n' "$dir/adfslib"
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+
+  return 1
+}
+
+stage_extracted_floppy() {
+  local source="$1"
+  local adfslib
+  local name
+  local destination
+
+  adfslib="$(find_adfslib "$source" || true)"
+  if [[ -z "$adfslib" ]]; then
+    printf 'ADFSlib.py was not found; importing raw floppy image only. Set ADFSLIB_PATH to enable extraction.\n' >&2
+    return 0
+  fi
+
+  name="$(sanitize_image_name "$(basename "$source")")"
+  destination="$EXTRACTED_FLOPPIES_DIR/$name"
+  printf 'Extracting Acorn/RISC OS floppy image with %s\n' "$adfslib"
+  if ! python3 "$ROOT/scripts/extract-adfs-image.py" --adfslib "$adfslib" "$source" "$destination"; then
+    printf 'Could not extract floppy image; importing raw floppy image only.\n' >&2
+    rm -rf "$destination"
+  fi
+}
+
 if [[ -n "$DISC_PATH" || -n "$FLOPPY_PATH" ]]; then
   rm -rf "$DISC_SHARE_DIR"
   mkdir -p "$DISC_SHARE_DIR"
   [[ -z "$DISC_PATH" ]] || stage_import_image "$DISC_PATH" "Disc"
-  [[ -z "$FLOPPY_PATH" ]] || stage_import_image "$FLOPPY_PATH" "Floppy"
+  if [[ -n "$FLOPPY_PATH" ]]; then
+    stage_import_image "$FLOPPY_PATH" "Floppy"
+    stage_extracted_floppy "$FLOPPY_PATH"
+  fi
 
   DISC_ARGS=(
     -fsdev "local,id=$DISC_SHARE_TAG,path=$DISC_SHARE_DIR,security_model=mapped-xattr,readonly=on"

@@ -181,6 +181,30 @@ import_image_set() {
   done < <(sudo find "$DISC_SHARE_MOUNT" -maxdepth 1 -type f -iname "$pattern" -print0)
 }
 
+import_extracted_tree_set() {
+  local source_root="$1"
+  local destination="$2"
+  local source name target
+
+  if [[ ! -d "$source_root" ]]; then
+    return 0
+  fi
+
+  cd "$DIRECT_DIR"
+  mkdir -p "$destination"
+
+  while IFS= read -r -d '' source; do
+    name="$(basename "$source")"
+    target="$destination/$name"
+    log "Importing extracted image contents $(basename "$source") as $target"
+    rm -rf "$target"
+    rm -f "$target,ffc"
+    sudo cp -a "$source" "$target"
+    sudo chown -R "$(id -u):$(id -g)" "$target"
+    chmod -R u+rwX,go+rX "$target"
+  done < <(sudo find "$source_root" -mindepth 1 -maxdepth 1 -type d -print0)
+}
+
 import_configured_discs() {
   if ! mount_disc_share; then
     log "Could not mount QEMU disc share '$DISC_SHARE_TAG'"
@@ -188,7 +212,10 @@ import_configured_discs() {
   fi
 
   import_image_set '*.hdf' HardDisc4/ImportedDiscs ffc
-  import_image_set '*.adf' HardDisc4/ImportedFloppies ffc
+  import_extracted_tree_set "$DISC_SHARE_MOUNT/_extracted/floppies" HardDisc4/ImportedFloppies
+  if [[ ! -d "$DISC_SHARE_MOUNT/_extracted/floppies" ]]; then
+    import_image_set '*.adf' HardDisc4/ImportedFloppies ffc
+  fi
 }
 
 prepare() {
