@@ -12,14 +12,16 @@ MEMORY="${MEMORY:-3072}"
 SMP="${SMP:-4}"
 DISC_PATH=""
 FLOPPY_PATH=""
+OPEN_VNC=0
 DISC_SHARE_TAG="riscosdiscs"
 DISC_SHARE_DIR="$VM_DIR/disc-share"
 
 usage() {
   cat <<USAGE
-Usage: $0 [--disc /path/to/acorn-disc.hdf] [--floppy /path/to/acorn-floppy.adf]
+Usage: $0 [--open-vnc] [--disc /path/to/acorn-disc.hdf] [--floppy /path/to/acorn-floppy.adf]
 
 Options:
+  --open-vnc     Open macOS VNC when ready, then stop the VM when the viewer exits.
   --disc PATH     Share one Acorn/RISC OS hard disc image with the guest.
   --floppy PATH   Share one Acorn/RISC OS floppy image with the guest.
   -h, --help      Show this help.
@@ -28,6 +30,10 @@ USAGE
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --open-vnc)
+      OPEN_VNC=1
+      shift
+      ;;
     --disc)
       if [[ $# -lt 2 ]]; then
         printf '%s\n' '--disc requires a path.' >&2
@@ -90,10 +96,23 @@ find_firmware_file() {
   return 1
 }
 
+ensure_port_free() {
+  local port="$1"
+  local label="$2"
+
+  if nc -z 127.0.0.1 "$port" >/dev/null 2>&1; then
+    printf '%s port 127.0.0.1:%s is already in use. Is the VM already running?\n' "$label" "$port" >&2
+    exit 1
+  fi
+}
+
 if [[ ! -f "$DISK" || ! -f "$SEED_ISO" ]]; then
   printf 'Missing VM files. Create them first:\n  %s/scripts/create-vm.sh\n' "$ROOT" >&2
   exit 1
 fi
+
+ensure_port_free "$SSH_PORT" "SSH"
+ensure_port_free "$VNC_PORT" "VNC"
 
 DISC_ARGS=()
 stage_import_image() {
@@ -131,6 +150,11 @@ if [[ -z "$QEMU" ]]; then
   exit 1
 fi
 
+if [[ "$OPEN_VNC" -eq 1 ]] && ! command -v open >/dev/null 2>&1; then
+  printf 'The --open-vnc option requires macOS open(1).\n' >&2
+  exit 1
+fi
+
 EFI_CODE="$(find_firmware_file edk2-aarch64-code.fd || true)"
 if [[ -z "$EFI_CODE" ]]; then
   printf 'Could not find EDK2 AArch64 firmware. With Homebrew QEMU this usually lives under $(brew --prefix qemu)/share/qemu.\n' >&2
@@ -146,7 +170,12 @@ else
   printf 'Warning: non-Apple-Silicon host detected; ARM64 emulation will be slow.\n' >&2
 fi
 
-if [[ -t 0 ]]; then
+if [[ "$OPEN_VNC" -eq 1 ]]; then
+  SERIAL_LOG="${SERIAL_LOG:-$VM_DIR/serial.log}"
+  : > "$SERIAL_LOG"
+  SERIAL_ARGS=(-serial "file:$SERIAL_LOG" -monitor none)
+  QUIT_HINT="Managed VNC mode is using serial log $SERIAL_LOG."
+elif [[ -t 0 ]]; then
   SERIAL_ARGS=(-serial mon:stdio)
   QUIT_HINT='Quit QEMU from this terminal with Ctrl-A then X.'
 else
@@ -166,7 +195,7 @@ if [[ -n "$FLOPPY_PATH" ]]; then
 fi
 printf '%s\n\n' "$QUIT_HINT"
 
-exec "$QEMU" \
+QEMU_ARGS=(
   -machine virt,highmem=off \
   -accel "$ACCEL" \
   -cpu "$CPU" \
@@ -183,3 +212,62 @@ exec "$QEMU" \
   "${SERIAL_ARGS[@]}" \
   -display none \
   -name riscos-direct
+)
+
+wait_for_vnc() {
+  local banner
+  local i
+
+  for i in $(seq 1 240); do
+    banner="$({ sleep 1; } | nc -w 2 127.0.0.1 "$VNC_PORT" 2>/dev/null | head -c 4 || true)"
+    if [[ "$banner" == "RFB " ]]; then
+      return 0
+    fi
+    sleep 2
+  done
+
+  return 1
+}
+
+if [[ "$OPEN_VNC" -ne 1 ]]; then
+  exec "$QEMU" "${QEMU_ARGS[@]}"
+fi
+
+"$QEMU" "${QEMU_ARGS[@]}" &
+QEMU_PID=$!
+CLEANED_UP=0
+
+cleanup_managed_vm() {
+  if [[ "$CLEANED_UP" -eq 1 ]]; then
+    return 0
+  fi
+  CLEANED_UP=1
+
+  if kill -0 "$QEMU_PID" >/dev/null 2>&1; then
+    printf 'Stopping VM...\n'
+    "$ROOT/scripts/stop-vm.sh" >/dev/null 2>&1 || true
+
+    for _ in $(seq 1 20); do
+      if ! kill -0 "$QEMU_PID" >/dev/null 2>&1; then
+        wait "$QEMU_PID" 2>/dev/null || true
+        return 0
+      fi
+      sleep 1
+    done
+
+    printf 'VM did not stop gracefully; terminating QEMU process %s.\n' "$QEMU_PID" >&2
+    kill "$QEMU_PID" >/dev/null 2>&1 || true
+    wait "$QEMU_PID" 2>/dev/null || true
+  fi
+}
+
+trap cleanup_managed_vm EXIT INT TERM
+
+printf 'Waiting for VNC server on localhost:%s...\n' "$VNC_PORT"
+if ! wait_for_vnc; then
+  printf 'Timed out waiting for VNC. Check %s for boot progress.\n' "$SERIAL_LOG" >&2
+  exit 1
+fi
+
+printf 'Opening vnc://localhost:%s. Close the VNC viewer to stop the VM.\n' "$VNC_PORT"
+open -W "vnc://localhost:$VNC_PORT"

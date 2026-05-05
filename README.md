@@ -40,6 +40,14 @@ Start it:
 ./scripts/start-vm.sh
 ```
 
+Start it in managed VNC mode:
+
+```bash
+./scripts/start-vm.sh --open-vnc
+```
+
+This waits until RISC OS is reachable over VNC, opens `vnc://localhost:5901` with macOS, and stops the VM when the VNC viewer exits. It also keeps the serial console in `vm/serial.log` instead of taking over your terminal.
+
 Start it with an Acorn/RISC OS hard disc image attached:
 
 ```bash
