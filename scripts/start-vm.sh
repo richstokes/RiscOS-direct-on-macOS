@@ -119,7 +119,7 @@ fi
 ensure_port_free "$SSH_PORT" "SSH"
 ensure_port_free "$VNC_PORT" "VNC"
 
-DISC_ARGS=()
+DISC_SHARE_ENABLED=0
 stage_import_image() {
   local source="$1"
   local label="$2"
@@ -199,10 +199,7 @@ if [[ -n "$DISC_PATH" || -n "$FLOPPY_PATH" ]]; then
     stage_extracted_floppy "$FLOPPY_PATH"
   fi
 
-  DISC_ARGS=(
-    -fsdev "local,id=$DISC_SHARE_TAG,path=$DISC_SHARE_DIR,security_model=mapped-xattr,readonly=on"
-    -device "virtio-9p-pci,fsdev=$DISC_SHARE_TAG,mount_tag=$DISC_SHARE_TAG"
-  )
+  DISC_SHARE_ENABLED=1
 fi
 
 QEMU="$(find_qemu || true)"
@@ -268,8 +265,17 @@ QEMU_ARGS=(
   -device virtio-blk-pci,drive=seed,bootindex=1 \
   -drive "if=none,id=seed,format=raw,media=cdrom,file=$SEED_ISO,readonly=on" \
   -device virtio-net-pci,netdev=net0 \
-  -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:$SSH_PORT-:22,hostfwd=tcp:127.0.0.1:$VNC_PORT-:5901" \
-  "${DISC_ARGS[@]}" \
+  -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:$SSH_PORT-:22,hostfwd=tcp:127.0.0.1:$VNC_PORT-:5901"
+)
+
+if [[ "$DISC_SHARE_ENABLED" -eq 1 ]]; then
+  QEMU_ARGS+=(
+    -fsdev "local,id=$DISC_SHARE_TAG,path=$DISC_SHARE_DIR,security_model=mapped-xattr,readonly=on"
+    -device "virtio-9p-pci,fsdev=$DISC_SHARE_TAG,mount_tag=$DISC_SHARE_TAG"
+  )
+fi
+
+QEMU_ARGS+=(
   "${SERIAL_ARGS[@]}" \
   -display none \
   -name riscos-direct
