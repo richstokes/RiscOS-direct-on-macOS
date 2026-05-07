@@ -1,9 +1,8 @@
 # RISC OS 4 on macOS
 
 This folder launches a usable RISC OS 4.02 desktop on macOS with RPCEmu.
-It downloads the Mac RPCEmu build, RISC OS 4 CD image, and RISC OS 4.02 ROM
-zip on first run, then generates a local RPCEmu data directory and starts the
-native Mac interpreter.
+It downloads the Mac RPCEmu build and RISC OS 4.02 ROM zip on first run, then
+generates a local RPCEmu data directory and starts the native Mac interpreter.
 
 ## Launch
 
@@ -14,9 +13,9 @@ cd RISCOS_4
 
 That command prepares `run/rpcemu-riscos4/Data` and starts the native Mac
 RPCEmu interpreter. On this machine the boot test reached the RISC OS desktop
-with the icon bar visible, including HostFS, the mounted RISC OS 4 CD, and
-Apps. `make rpcemu-riscos4` is kept as a shortcut, but `./run.sh` and its
-script flags are the intentional interface.
+with the icon bar visible, including HostFS and Apps. `make rpcemu-riscos4` is
+kept as a shortcut, but `./run.sh` and its script flags are the intentional
+interface.
 
 To download and stage everything without opening the RPCEmu window, use:
 
@@ -121,8 +120,6 @@ HostFS: Registration request version 3 accepted
 ## What Gets Used
 
 - `emulators/rpcemu-0.9.4a-mac/`: Mac RPCEmu 0.9.4a app bundle.
-- `downloads/archive-org/riscos-4-cdrev-3/RISCOS4CDREV3.iso`: RISC OS 4 CD
-  Rev 3 mounted as the emulator CD-ROM.
 - `roms/a7000p.zip`: split RISC OS 4 ROM zip.
 - `run/rpcemu-riscos4/Data/roms/riscos402.rom`: generated 4MiB RPCEmu ROM.
 - `run/rpcemu-riscos4/Data/rpc.cfg`: generated RPCEmu config.
@@ -180,7 +177,6 @@ here.
 - RISC OS mode table: <https://www.riscos.com/support/developers/prm/modes.html>
 - RISC OS ModeInfo and `LoadModeFile`: <https://www.riscos.com/support/developers/prm/video.html>
 - RISC OS FileCore hard disc maps and disc records: <https://www.riscos.com/support/developers/prm/filecore.html>
-- RISC OS 4 CD Rev 3 ISO: <https://archive.org/details/riscos-4-cdrev-3>
 - MDK `a7000p` ROM set details: <https://mdk.cab/game/a7000p>
 - RPCEmu HDF geometry discussion: <https://www.mail-archive.com/rpcemu%40riscos.info/msg00736.html>
 - RPCEmu hard drive creation notes: <https://stardot.org.uk/forums/viewtopic.php?t=11822>

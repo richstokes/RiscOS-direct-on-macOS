@@ -5,7 +5,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_ROOT="$ROOT/emulators/rpcemu-0.9.4a-mac"
 APP_DATA="$APP_ROOT/Data"
 DATA="$ROOT/run/rpcemu-riscos4/Data"
-ISO="$ROOT/downloads/archive-org/riscos-4-cdrev-3/RISCOS4CDREV3.iso"
 MODEL="RPC610"
 MONITOR_TYPE="4"
 WIMP_MODE="31"
@@ -160,10 +159,6 @@ if [[ ! -d "$APP_DATA" || ! -d "$APP_ROOT/RPCEmu-Interpreter.app" ]]; then
   "$ROOT/scripts/fetch-rpcemu-mac.sh"
 fi
 
-if [[ ! -f "$ISO" ]]; then
-  "$ROOT/scripts/fetch-riscos4-cd.sh"
-fi
-
 if [[ ! -f "$ROOT/roms/a7000p.zip" ]]; then
   "$ROOT/scripts/fetch-riscos4-roms.sh"
 fi
@@ -198,8 +193,8 @@ fi
 cat > "$DATA/rpc.cfg" <<EOF
 [General]
 bridgename=rpcemu
-cdrom_enabled=1
-cdrom_iso=$ISO
+cdrom_enabled=0
+cdrom_iso=
 cdrom_type=0
 cpu_idle=0
 ipaddress=172.31.0.1

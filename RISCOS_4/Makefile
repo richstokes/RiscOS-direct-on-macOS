@@ -1,16 +1,13 @@
 SHELL_SCRIPTS := run.sh $(sort $(wildcard scripts/*.sh))
 BASH_CMD ?= bash
 
-.PHONY: fetch-riscos4-roms fetch-rpcemu-mac fetch-riscos4-cd prepare-rpcemu-riscos4 rpcemu-riscos4 check-scripts
+.PHONY: fetch-riscos4-roms fetch-rpcemu-mac prepare-rpcemu-riscos4 rpcemu-riscos4 check-scripts
 
 fetch-riscos4-roms:
 	@scripts/fetch-riscos4-roms.sh
 
 fetch-rpcemu-mac:
 	@scripts/fetch-rpcemu-mac.sh
-
-fetch-riscos4-cd:
-	@scripts/fetch-riscos4-cd.sh
 
 prepare-rpcemu-riscos4:
 	@scripts/prepare-rpcemu-riscos4.sh
