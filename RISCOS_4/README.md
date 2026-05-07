@@ -13,9 +13,7 @@ cd RISCOS_4
 
 That command prepares `run/rpcemu-riscos4/Data` and starts the native Mac
 RPCEmu interpreter. On this machine the boot test reached the RISC OS desktop
-with the icon bar visible, including HostFS and Apps. `make rpcemu-riscos4` is
-kept as a shortcut, but `./run.sh` and its script flags are the intentional
-interface.
+with the icon bar visible, including HostFS and Apps.
 
 To download and stage everything without opening the RPCEmu window, use:
 
@@ -26,6 +24,12 @@ To download and stage everything without opening the RPCEmu window, use:
 The launcher also nudges the RPCEmu window to the top of the main display after
 Qt creates it. The default is `20,24`; override it with
 `--window-position X,Y`, or disable the nudge with `--no-window-position`.
+
+The helper scripts are Bash scripts, not zsh scripts. To syntax-check them:
+
+```sh
+for script in run.sh scripts/*.sh; do bash -n "$script"; done
+```
 
 You can also boot with an Acorn `.adf` floppy image already inserted in drive
 `:0`:
