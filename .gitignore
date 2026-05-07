@@ -2,6 +2,29 @@
 __pycache__/
 *.pyc
 
+# Large emulator, VM, archive, ROM, and disc-image artifacts anywhere.
+*.7z
+*.adf
+*.app/
+*.bin
+*.chd
+*.dmg
+*.dsk
+*.dsd
+*.hdf
+*.img
+*.iso
+*.qcow2
+*.rom
+*.ssd
+*.tar
+*.tar.*
+*.tbz
+*.vdi
+*.vhd
+*.vmdk
+*.zip
+
 # RISC OS 4 / RPCEmu generated files and downloads.
 RISCOS_4/downloads/
 RISCOS_4/emulators/
@@ -11,12 +34,6 @@ RISCOS_4/screenshots/
 RISCOS_4/build/
 RISCOS_4/roms/*
 !RISCOS_4/roms/.gitkeep
-RISCOS_4/*.adf
-RISCOS_4/*.bin
-RISCOS_4/*.chd
-RISCOS_4/*.hdf
-RISCOS_4/*.img
-RISCOS_4/*.rom
 
 # RISC OS 5 / QEMU generated files and downloads.
 RISCOS_5/downloads/
