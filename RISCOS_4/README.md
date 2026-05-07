@@ -67,7 +67,10 @@ For users interested in a ready-made Archimedes software archive, search for
 with lots of apps, games, demos, and utilities. The launcher will automatically
 create the RPCEmu-compatible geometry-fixed copy needed for RISC OS 4.
 
-Some older Archimedes games switch into legacy screen modes that do not always
+If games are your goal, I'd try [arculator](https://github.com/richstokes/arculator-mac) first since it emulates older Archimedes hardware with better compatibility, although you will be on RiscOS 3.
+
+When using the method from this repo with RISCOS4, 
+some older Archimedes games switch into legacy screen modes that do not always
 behave well with the default Super-VGA/high-resolution desktop setup. If a game
 resizes the RPCEmu window and then only shows a black screen, launch with the
 game compatibility profile:
