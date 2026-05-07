@@ -1,4 +1,24 @@
-downloads/
-extracted/
-vm/
 .DS_Store
+__pycache__/
+*.pyc
+
+# RISC OS 4 / RPCEmu generated files and downloads.
+RISCOS_4/downloads/
+RISCOS_4/emulators/
+RISCOS_4/run/
+RISCOS_4/logs/
+RISCOS_4/screenshots/
+RISCOS_4/build/
+RISCOS_4/roms/*
+!RISCOS_4/roms/.gitkeep
+RISCOS_4/*.adf
+RISCOS_4/*.bin
+RISCOS_4/*.chd
+RISCOS_4/*.hdf
+RISCOS_4/*.img
+RISCOS_4/*.rom
+
+# RISC OS 5 / QEMU generated files and downloads.
+RISCOS_5/downloads/
+RISCOS_5/extracted/
+RISCOS_5/vm/
