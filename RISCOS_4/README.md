@@ -25,7 +25,7 @@ The launcher also nudges the RPCEmu window to the top of the main display after
 Qt creates it. The default is `20,24`; override it with
 `--window-position X,Y`, or disable the nudge with `--no-window-position`.
 
-The helper scripts are Bash scripts, not zsh scripts. To syntax-check them:
+To syntax-check them:
 
 ```sh
 for script in run.sh scripts/*.sh; do bash -n "$script"; done
