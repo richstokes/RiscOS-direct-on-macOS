@@ -18,9 +18,6 @@ with the icon bar visible, including HostFS, the mounted RISC OS 4 CD, and
 Apps. `make rpcemu-riscos4` is kept as a shortcut, but `./run.sh` and its
 script flags are the intentional interface.
 
-Only run this if your RISC OS license covers the ROM archive downloaded by
-`scripts/fetch-riscos4-roms.sh`.
-
 To download and stage everything without opening the RPCEmu window, use:
 
 ```sh
@@ -138,7 +135,7 @@ against macOS's bundled Bash 3.2.
 - `emulators/rpcemu-0.9.4a-mac/`: Mac RPCEmu 0.9.4a app bundle.
 - `downloads/archive-org/riscos-4-cdrev-3/RISCOS4CDREV3.iso`: RISC OS 4 CD
   Rev 3 mounted as the emulator CD-ROM.
-- `roms/a7000p.zip`: licensed split RISC OS 4 ROM zip.
+- `roms/a7000p.zip`: split RISC OS 4 ROM zip.
 - `run/rpcemu-riscos4/Data/roms/riscos402.rom`: generated 4MiB RPCEmu ROM.
 - `run/rpcemu-riscos4/Data/rpc.cfg`: generated RPCEmu config.
 - `run/rpcemu-riscos4/Data/hostfs/!Boot,feb`: generated HostFS boot file.
@@ -150,7 +147,7 @@ ROMs and downloaded binaries are intentionally ignored by this workspace.
 ## ROM Handling
 
 RPCEmu wants files in its `roms` directory to concatenate into one 2/4/6/8MiB
-ROM image. The licensed `a7000p.zip` ROM set stores RISC OS 4.02 as two
+ROM image. The `a7000p.zip` ROM set stores RISC OS 4.02 as two
 16-bit chip images:
 
 ```text
@@ -183,7 +180,7 @@ riscos402.rom   4,194,304 bytes   sha1 37acd8573da51493beb0fa6eef29623ce382822f
 Stock QEMU is not a configuration-only route for RISC OS 4 because it lacks an
 Acorn A7000/Risc PC board model. Stock MAME can identify and start the RISC OS
 4.02 ROM set, but its A7000+/Risc PC drivers were not usable as a desktop path
-here. Those experiments are no longer part of the active repo.
+here.
 
 ## Sources
 
