@@ -118,26 +118,6 @@ romload: ROM patch applied: 8MB VRAM RISC OS 4.02
 HostFS: Registration request version 3 accepted
 ```
 
-## Optional Make Targets
-
-```sh
-make fetch-riscos4-roms
-make fetch-rpcemu-mac
-make fetch-riscos4-cd
-make prepare-rpcemu-riscos4
-make rpcemu-riscos4
-make check-scripts
-```
-
-`make rpcemu-riscos4` is equivalent to `./run.sh`. The plain script path is
-preferred because it supports all runtime flags directly.
-
-The helper shell scripts are Bash scripts, not zsh scripts. They can be run
-directly via their `#!/usr/bin/env bash` shebangs or explicitly with
-`bash ./run.sh ...`. `make check-scripts` runs `bash -n` over `run.sh` and
-every `scripts/*.sh` file; use `make check-scripts BASH_CMD=/bin/bash` to check
-against macOS's bundled Bash 3.2.
-
 ## What Gets Used
 
 - `emulators/rpcemu-0.9.4a-mac/`: Mac RPCEmu 0.9.4a app bundle.
