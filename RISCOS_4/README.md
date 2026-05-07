@@ -67,6 +67,9 @@ For users interested in a ready-made Archimedes software archive, search for
 with lots of apps, games, demos, and utilities. The launcher will automatically
 create the RPCEmu-compatible geometry-fixed copy needed for RISC OS 4.
 
+
+## Games 
+
 If games are your goal, I'd try [arculator](https://github.com/richstokes/arculator-mac) first since it emulates older Archimedes hardware with better compatibility, although you will be on RiscOS 3.
 
 When using the method from this repo with RISCOS4, 
@@ -95,6 +98,8 @@ floppy" path is not a complete workaround here either, since ADFFS notes RPCEmu
 can open floppy images but games fail because RPCEmu's MMU emulation is
 incomplete. For maximum game compatibility, use the same `.adf` images with an
 Archimedes-class emulator/core such as MAME `aa310`.
+
+## Misc Notes
 
 The prep step seeds RPCEmu's CMOS file to boot from HostFS, then writes a small
 HostFS `!Boot` file that loads an RPCEmu ModeInfo file and switches the desktop
